@@ -1,0 +1,31 @@
+name: Cartes du profil
+
+# Redessine le graphe et les chiffres d'activité chaque matin, à chaque envoi sur main, ou à la main.
+"on":
+  schedule:
+    - cron: "23 5 * * *"   # vers 6 h 23 à Paris l'hiver
+  workflow_dispatch: {}
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  cartes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r scripts/requirements.txt
+      - name: Relever les contributions (page publique, sans jeton)
+        run: python scripts/fetch_contributions.py
+      - name: Dessiner les cartes
+        run: python scripts/render_cards.py
+      - name: Enregistrer
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Cartes du profil mises à jour [skip ci]"
+          file_pattern: "data/contributions.json cards/*.svg"
